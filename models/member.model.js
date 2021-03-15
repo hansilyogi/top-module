@@ -26,6 +26,9 @@ var memberSchema = mongoose.Schema({
     },
     fcmToken: {
         type: String
+    },
+    memberImg: {
+        type: String
     }
 });
 
