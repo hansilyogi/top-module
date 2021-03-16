@@ -51,13 +51,16 @@ router.post("/member_register",uploadMember.single('memberImg'), async function(
 });
 
 router.post("/update_member", async function(req, res, next){
-    const{ memberId, emailId, password } = req.body;
+    const{ memberId, name, mobileNo, emailId, password, gender } = req.body;
     try {
         var existMember = await memberSchema.find({ _id: memberId });
         if(existMember.length == 1){
             let updateIs = {
+                name: name,
+                mobileNo: mobileNo,
                 emailId: emailId,
-                password: password
+                password: password,
+                gender: gender
             }
             var updateMember = await memberSchema.findByIdAndUpdate(existMember[0]._id, updateIs);
             res.status(200).json({ IsSuccss: true, Data: 1, Message: "Data Updated"});
