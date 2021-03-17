@@ -1,11 +1,7 @@
 var mongoose = require('mongoose');
 var areaSchema = mongoose.Schema({
 
-    projectId: {
-        type: mongoose.Types.ObjectId,
-        ref: "ProjectSite"
-    },
-    area: {
+    name: {
         type: String
     },
 });
