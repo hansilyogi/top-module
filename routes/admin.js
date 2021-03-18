@@ -27,13 +27,13 @@ var uploadMember = multer({
 
 router.post("/member_register",uploadMember.single('memberImg'), async function(req, res, next){
     const{ name, mobileNo, emailId, role, password, gender } = req.body;
-    var fileinfo = req.file;
+    let fileinfo = req.file;
     try {
-        var existMember = await memberSchema.find({ mobileNo: mobileNo });
+        let existMember = await memberSchema.find({ mobileNo: mobileNo });
         if(existMember.length == 1){
             res.status(200).json({ IsSuccess: true, Data: [], Message: "Already Registered !"});
         }else{
-            var addMember = await new memberSchema({
+            let addMember = await new memberSchema({
                 name: name,
                 mobileNo: mobileNo,
                 emailId: emailId,
@@ -55,7 +55,13 @@ router.post("/member_register",uploadMember.single('memberImg'), async function(
 router.post("/update_member", async function(req, res, next){
     const{ memberId, name, mobileNo, emailId, password, gender } = req.body;
     try {
-        var existMember = await memberSchema.find({ _id: memberId });
+        let existMember = await memberSchema.aggregate([
+            {
+                $match: {
+                    _id: mongoose.Types.ObjectId(memberId)
+                }
+            }
+        ]);
         if(existMember.length == 1){
             let updateIs = {
                 name: name,
@@ -64,7 +70,7 @@ router.post("/update_member", async function(req, res, next){
                 password: password,
                 gender: gender
             }
-            var updateMember = await memberSchema.findByIdAndUpdate(existMember[0]._id, updateIs);
+            let updateMember = await memberSchema.findByIdAndUpdate(memberId, updateIs);
             res.status(200).json({ IsSuccss: true, Data: 1, Message: "Data Updated"});
         }else{
             res.status(200).json({ IsSuccss: true, Data: 0, Message: "Data Not Updated"});
@@ -77,11 +83,18 @@ router.post("/update_member", async function(req, res, next){
 router.post('/delete_member', async function(req, res, next){
     const{ memberId } = req.body;
     try {
-        var existMember = await memberSchema.findByIdAndDelete(memberId);
-        if(existMember){
+        let existMember = await memberSchema.aggregate([
+            {
+                $match: {
+                    _id: mongoose.Types.ObjectId(memberId)
+                }
+            }
+        ]);
+        if(existMember.length == 1){
+            let deleteMember = await memberSchema.findByIdAndDelete(memberId);
             res.status(200).json({ IsSuccess: true, Data: 1, Message: "Delete Successfully!" });
         }else{
-            res.status(200).json({ IsSuccess: true, Data: 0, Message: "Delete Failed!" });
+            res.status(200).json({ IsSuccess: true, Data: 0, Message: "User Not Found" });
         }
     } catch (error) {
         res.status(500).json({ IsSuccess: false, Message: error.message });
@@ -91,7 +104,7 @@ router.post('/delete_member', async function(req, res, next){
 router.post('/getMember', async function(req, res, next){
     const{ memberId } = req.body;
     try {
-        var existMember = await memberSchema.find({_id: memberId});
+        let existMember = await memberSchema.find({_id: memberId});
         if(existMember.length == 1){
             res.status(200).json({ IsSuccess: true, Data: existMember, Message: "Data found" });
         }else{
@@ -127,38 +140,19 @@ router.post("/login", async function(req,res,next){
                 fcmToken: fcmToken
             });
             // console.log(updateMember);
+            res.status(200).json({ IsSuccess: true, Data: isuser, Message: "Login successfully"});
+        }else{
+            res.status(200).json({ IsSuccess: true , Data: [] , Message: "User Not Found" });
         }
     } catch (error) {
         res.status(500).json({ IsSuccess : false, Message : error.message });
     }
 });
 
-router.post('/login_old', async function(req, res, next){
-    const{ userId, password, deviceType, fcmToken} = req.body;
-    try {
-        var existMember = await memberSchema.find({
-            mobileNo: userId,
-            password: password
-        });
-        console.log(existMember);
-        if(existMember.length > 0){
-            var updateMember = await memberSchema.findByIdAndUpdate(existMember[0]._id,{
-                deviceType: deviceType,
-                fcmToken: fcmToken
-            });
-            res.status(200).json({ IsSuccess: true , Data: existMember , Message: "User LoggedIn" });
-        }else{
-            res.status(200).json({ IsSuccess: true , Data: [] , Message: "User Not Found" });
-        }
-    } catch (error) {
-        res.status(500).json({ IsSuccess: false, Message: error.message });
-    }
-});
-
 router.post('/project_register', async function(req, res, next){
     const{siteName, lat, long, address, date} = req.body;
     try {
-        var addProject = await new projectSchema({
+        let addProject = await new projectSchema({
             siteName: siteName,
             location: {
                 lat: lat,
@@ -180,7 +174,7 @@ router.post('/project_register', async function(req, res, next){
 router.post('/addArea', async function(req, res, next){
     const{ name } = req.body;
     try {
-        var existArea = await new areaSchema({
+        let existArea = await new areaSchema({
             name: name
         });
         if(existArea != null){
@@ -196,7 +190,7 @@ router.post('/addArea', async function(req, res, next){
 router.post('/addCategory', async function(req, res, next){
     const{ areaId, categoryName } = req.body;
     try {
-        var existCategory = await new categorySchema({
+        let existCategory = await new categorySchema({
             areaId: areaId,
             categoryName: categoryName
         });
