@@ -15,22 +15,26 @@ var projectSchema = mongoose.Schema({
             type: String
         }
     },
-    date: {
-        type: String
-    },
     customerId: {
         type: mongoose.Types.ObjectId,
         ref: "Member" 
-    },
-    siteImg: {
-        type: String
     },
     staffId: [
         {
             type: mongoose.Types.ObjectId,
             ref: "Member"
         }
-    ]
+    ],
+    startDate: {
+        type: String
+    },
+    siteImg: {
+        type: String
+    },
+    status: {
+        type: String,
+        default: "0"
+    }
 });
 
 module.exports = mongoose.model("ProjectSite", projectSchema);

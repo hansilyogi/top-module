@@ -1,11 +1,10 @@
 var mongoose = require('mongoose');
 var categorySchema = mongoose.Schema({
 
-    areaId: {
-        type: mongoose.Types.ObjectId,
-        ref: "Area"
-    },
     categoryName: {
+        type: String
+    },
+    categoryImage: {
         type: String
     }
 });

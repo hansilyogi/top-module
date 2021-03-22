@@ -20,10 +20,47 @@ var memberImage = multer.diskStorage({
     }
 });
 
-var uploadMember = multer({
-    storage: memberImage,
-    limits: {fieldSize: 1024 * 1024 * 5}
+var siteImage = multer.diskStorage({
+    destination: function(req, file, cb){
+        cb(null, 'uploads/siteImage');
+    },
+    filename: function(req, file, cb){
+        cb(null, Date.now() + "_" + file.originalname);
+    }
 });
+
+var areaImage = multer.diskStorage({
+    destination: function(req, file, cb){
+        cb(null, 'uploads/areaImage');
+    },
+    filename: function(req, file, cb){
+        cb(null, Date.now() + "_" + file.originalname);
+    }
+});
+
+var categoryImage = multer.diskStorage({
+    destination: function(req, file, cb){
+        cb(null, 'uploads/categoryImage');
+    },
+    filename: function(req, file, cb){
+        cb(null, Date.now() + "_" + file.originalname);
+    }
+});
+
+var taskImage = multer.diskStorage({
+    destination: function(req, file, cb){
+        cb(null, 'uploads/taskImage');
+    },
+    filename: function(req, file, cb){
+        cb(null, Date.now() + "_" + file.originalname);
+    }
+});
+
+var uploadMember = multer({storage: memberImage});
+var uploadSite = multer({storage: siteImage});
+var uploadArea = multer({storage: areaImage});
+var uploadCategory = multer({storage: categoryImage});
+var uploadTask = multer({storage: taskImage});
 
 router.post("/member_register",uploadMember.single('memberImg'), async function(req, res, next){
     const{ name, mobileNo, emailId, role, password, gender } = req.body;
@@ -52,8 +89,9 @@ router.post("/member_register",uploadMember.single('memberImg'), async function(
     }
 });
 
-router.post("/update_member", async function(req, res, next){
+router.post("/update_member", uploadMember.single('memberImg'), async function(req, res, next){
     const{ memberId, name, mobileNo, emailId, password, gender } = req.body;
+    let fileinfo = req.file;
     try {
         let existMember = await memberSchema.aggregate([
             {
@@ -64,11 +102,12 @@ router.post("/update_member", async function(req, res, next){
         ]);
         if(existMember.length == 1){
             let updateIs = {
-                name: name,
-                mobileNo: mobileNo,
-                emailId: emailId,
-                password: password,
-                gender: gender
+                name: name != undefined ? name : existMember[0].name,
+                mobileNo: mobileNo != undefined ? mobileNo : existMember[0].mobileNo,
+                emailId: emailId != undefined ? emailId : existMember[0].emailId,
+                password: password != undefined ? password : existMember[0].password,
+                gender: gender != undefined ? gender : existMember[0].gender,
+                memberImg: fileinfo != undefined ? fileinfo.path : existMember[0].memberImg
             }
             let updateMember = await memberSchema.findByIdAndUpdate(memberId, updateIs);
             res.status(200).json({ IsSuccss: true, Data: 1, Message: "Data Updated"});
@@ -149,8 +188,9 @@ router.post("/login", async function(req,res,next){
     }
 });
 
-router.post('/project_register', async function(req, res, next){
-    const{siteName, lat, long, address, date} = req.body;
+router.post('/project_register', uploadSite.single('siteImg'), async function(req, res, next){
+    const{siteName, lat, long, address, customerId, staffId, startDate } = req.body;
+    let fileinfo = req.file;
     try {
         let addProject = await new projectSchema({
             siteName: siteName,
@@ -159,7 +199,10 @@ router.post('/project_register', async function(req, res, next){
                 long: long,
                 address: address
             },
-            date: date
+            customerId: customerId,
+            staffId: staffId,
+            startDate: startDate,
+            siteImg: fileinfo == undefined ? " " : fileinfo.path,
         });
         if(addProject != null){
             addProject.save();
