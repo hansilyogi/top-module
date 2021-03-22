@@ -10,6 +10,7 @@ const memberSchema = require('../models/member.model');
 const projectSchema = require('../models/projectsite.model');
 const areaSchema = require('../models/area.model');
 const categorySchema = require('../models/category.model');
+const projectareaSchema = require('../models/projectArea.model');
 
 var memberImage = multer.diskStorage({
     destination: function(req, file, cb){
@@ -189,7 +190,9 @@ router.post("/login", async function(req,res,next){
 });
 
 router.post('/project_register', uploadSite.single('siteImg'), async function(req, res, next){
-    const{siteName, lat, long, address, customerId, staffId, startDate } = req.body;
+    const{siteName, lat, long, address, customerId, staffId } = req.body;
+    let dateTimeIs = moment().format('DD/MM/YYYY,h:mm:ss a').split(',');
+    let dateIs = dateTimeIs[0];
     let fileinfo = req.file;
     try {
         let addProject = await new projectSchema({
@@ -201,7 +204,7 @@ router.post('/project_register', uploadSite.single('siteImg'), async function(re
             },
             customerId: customerId,
             staffId: staffId,
-            startDate: startDate,
+            startDate: dateIs,
             siteImg: fileinfo == undefined ? " " : fileinfo.path,
         });
         if(addProject != null){
@@ -244,5 +247,49 @@ router.post('/addCategory', async function(req, res, next){
     } catch (error) {
         res.status(500).json({ IsSuccess: false, Message: error.message });
     }
-})
+});
+
+router.post('/addprojectArea', async function(req, res, next){
+    const{ projectId, areaId } = req.body;
+    try {
+
+        let exist = false;
+        for(i in areaId){
+            let existProjectArea = await projectareaSchema.aggregate([
+                {
+                    $match: {
+                        $and: [
+                            {projectId: mongoose.Types.ObjectId(projectId)},
+                            {areaId: mongoose.Types.ObjectId(areaId[i])}
+                        ]
+                    }
+                }
+            ]);
+            console.log(existProjectArea);
+            if(existProjectArea.length == 1){
+                // exist = true
+                return res.status(200).json({ IsSuccess : true , Data: [] , Message: "Already Exist" });
+            }
+        };
+
+        areaId.forEach(async function(area){
+            let projectAreaIs = await new projectareaSchema({
+                projectId: projectId,
+                areaId: area
+            });
+            if(projectAreaIs != null){
+                projectAreaIs.save();
+            }
+        });
+        if(areaId.length > 0){
+            return res.status(200).json({ IsSuccess: true, Data: 1, Message: "Project Area Registered"});
+        }else{
+            return res.status(200).json({ IsSuccess: true, Data: [], Message: "Project Area not Registered"});
+        }
+       
+    } catch (error) {
+        res.status(500).json({ IsSuccess: false, Message: error.message });
+    }
+});
+
 module.exports = router;
